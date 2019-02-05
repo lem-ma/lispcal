@@ -22,6 +22,8 @@ struct stack_structure
     struct function *fn;
     size_t fnlevel;
     size_t allocfn;
+
+    double lastvalue;
 } stack;
 
 void exiting(void);
