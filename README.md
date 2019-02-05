@@ -8,7 +8,7 @@ So, basically `lispcal` does what you think it should do when handling arithmati
 Usage
 ------
 
-To end the programme, use `exit` or `quit`.
+To end the program, use `exit` or `quit`.
 
 The following functions are available:
 
@@ -56,7 +56,7 @@ The following functions are available:
 
 `abs`
 
-They are used in whatever way you expect them to be used.
+They are used in whatever ways you expect them to be used.
 
 Predefined constant:
 
@@ -68,6 +68,9 @@ Predefined constant:
 
 with the maximum precision that `double` type floating-point numbers allows.
 
-`ans`
+Also, `ans` cites the answer from the last calculation.
 
-Cite the answer from the last calculation
+Errors
+------
+
+Every incurred error shall be reported (the reporting mechanism should be improved, though). However, this excludes the wrong placement of parentheses since lisp syntax is unambiguous without parentheses.
