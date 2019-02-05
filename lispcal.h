@@ -36,8 +36,6 @@ int pushstack(double number);
 
 int pushfunction(struct function newfn);
 
-inline char eq(char *s1, char *s2);
-
 struct function identify(char first);
 
 double respond(char *flagptr);
