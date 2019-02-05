@@ -67,3 +67,7 @@ Predefined constant:
 `gamma`
 
 with the maximum precision that `double` type floating-point numbers allows.
+
+`ans`
+
+Cite the answer from the last calculation
