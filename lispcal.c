@@ -58,7 +58,7 @@ double respond(char *flagptr)
     }
     if(stack.vallevel!=1||stack.fnlevel!=0)
         throwundeferror;
-    return stack.val[0];
+    return (stack.lastvalue=stack.val[0]);
 }
 
 void exiting(void)
@@ -171,6 +171,7 @@ struct function identify(char first)
         else return fn;
     }
     if(eq(buf,"exit")||eq(buf,"quit")) fn.signature=1,fn.nargs=0;
+    else if(eq(buf,"ans")) fn.signature=2,fn.nargs=0;
     else if(eq(buf,"+")||eq(buf,"add")||eq(buf,"plus"))
         fn.signature=9,fn.nargs=2;
     else if(eq(buf,"-")||eq(buf,"minus")) fn.signature=10,fn.nargs=2;
@@ -206,6 +207,7 @@ double invoke(unsigned sig)
     double temp;
     switch(sig)
     {
+        case 2: return stack.lastvalue;
         case 9:
             temp=stack.val[stack.vallevel-2]+stack.val[stack.vallevel-1];
             stack.vallevel-=2;
