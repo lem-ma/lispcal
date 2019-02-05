@@ -52,7 +52,11 @@ double respond(char *flagptr)
             return 0;
         }
     }
-    if(stack.vallevel!=1||stack.fnlevel!=0) throwundeferror;
+    if(stack.vallevel!=1||stack.fnlevel!=0)
+    {
+        throwundeferror;
+        return 0;
+    }
     return (stack.lastvalue=stack.val[0]);
 }
 
@@ -155,7 +159,7 @@ struct function identify(char first)
         else return fn;
     }
     if(eq(buf,"exit")||eq(buf,"quit")) fn.signature=1,fn.nargs=0;
-    else if(eq(buf,"ans")) fn.signature=2,fn.nargs=0;
+    else if(eq(buf,"ans")||eq(buf,"ditto")) fn.signature=2,fn.nargs=0;
     else if(eq(buf,"+")||eq(buf,"add")||eq(buf,"plus"))
         fn.signature=9,fn.nargs=2;
     else if(eq(buf,"-")||eq(buf,"minus")) fn.signature=10,fn.nargs=2;
