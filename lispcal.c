@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <math.h>
 
 int main(void)
@@ -13,10 +12,10 @@ int main(void)
     stack.allocfn=ALLOC_SIZE;
     atexit(exiting);
     if(stack.val==NULL||stack.fn==NULL) throwallocerror,exit(1);
-    char current=1;
+    char stay=1;
     puts("\rLispcal: A calculator using a lisp-like syntax\n");
-    while(current)
-        fputs("CAL> ",stdout),printf("= %lf\n\n",respond(&current));
+    while(stay)
+        fputs("CAL> ",stdout),printf("= %lf\n\n",respond(&stay));
     return 0;
 }
 
@@ -29,10 +28,10 @@ double respond(char *flagptr)
         if(c==' '||c=='('||c==')') continue;
         else if((c>='0'&&c<='9')||c=='.')
         {
-            if(pushstack(getnumber(c)))
-                throwallocerror,exit(1);
+            if(pushstack(getnumber(c))) throwallocerror,exit(1);
         }
-        else if(isalpha(c)||c=='+'||c=='-'||c=='*'||c=='/'||c=='^'||c=='%')
+        else if((c>='a'&&c<='z')
+                ||c=='+'||c=='-'||c=='*'||c=='/'||c=='^'||c=='%')
         {
             struct function newf=identify(c);
             if(newf.signature==0)
@@ -45,10 +44,7 @@ double respond(char *flagptr)
                 *flagptr=0;
                 return 0;
             }
-            else
-            {
-                if(pushfunction(newf)) throwallocerror,exit(1);
-            }
+            else if(pushfunction(newf)) throwallocerror,exit(1);
         }
         else
         {
@@ -56,8 +52,7 @@ double respond(char *flagptr)
             return 0;
         }
     }
-    if(stack.vallevel!=1||stack.fnlevel!=0)
-        throwundeferror;
+    if(stack.vallevel!=1||stack.fnlevel!=0) throwundeferror;
     return (stack.lastvalue=stack.val[0]);
 }
 
@@ -70,8 +65,7 @@ void exiting(void)
 double getnumber(char first)
 {
     double number=(first-'0')*1.0;
-    int flag=1;
-    int decimal=0;
+    int flag=1,decimal=0;
     while(flag)
     {
         first=getchar();
@@ -86,8 +80,7 @@ double getnumber(char first)
             if(decimal)
             {
                 double k=(first-'0')*1.0;
-                for(int i=decimal;i;--i)
-                    k/=10;
+                for(int i=decimal;i;--i) k/=10;
                 number+=k;
                 ++decimal;
             }
@@ -105,17 +98,14 @@ double getnumber(char first)
 
 int pushstack(double number)
 {
-    //check if memory space is enough
     if(stack.vallevel==stack.allocval)
     {
         stack.allocval+=ALLOC_SIZE;
         stack.val=realloc(stack.val,sizeof(double)*stack.allocval);
         if(stack.val==NULL) exit(1);
     }
-    //push the number
     stack.val[stack.vallevel]=number;
     stack.vallevel++;
-    //check if some function should be returned
     if(--stack.fn[stack.fnlevel-1].nargs==0)
         invoke(stack.fn[--stack.fnlevel].signature);
     return 0;
@@ -123,16 +113,13 @@ int pushstack(double number)
 
 int pushfunction(struct function newfn)
 {
-    //check if the function takes no argument
     if(newfn.nargs==0)
         return pushstack(invoke(newfn.signature));
-    //check if space needed to be alloc
     if(stack.fnlevel==stack.allocfn)
     {
         stack.allocfn+=ALLOC_SIZE;
         stack.fn=realloc(stack.fn,sizeof(struct function)*stack.allocfn);
     }
-    //push the function
     stack.fn[stack.fnlevel]=newfn;
     stack.fnlevel++;
     return 0;
@@ -140,10 +127,7 @@ int pushfunction(struct function newfn)
 
 inline char eq(char *s1, char *s2)
 {
-    for(;*s1;s1++,s2++)
-    {
-        if(*s1!= *s2) return 0;
-    }
+    for(;*s1;s1++,s2++) if(*s1!= *s2) return 0;
     return !(*s2);
 }
 
@@ -167,7 +151,7 @@ struct function identify(char first)
             buf[i]='\0';
             break;
         }
-        else if(isalpha(c)) buf[i]=c;
+        else if(c>='a'&&c<='z') buf[i]=c;
         else return fn;
     }
     if(eq(buf,"exit")||eq(buf,"quit")) fn.signature=1,fn.nargs=0;
@@ -304,12 +288,9 @@ double invoke(unsigned sig)
             temp=fabs(stack.val[--stack.vallevel]);
             pushstack(temp);
             break;
-        case 41:
-            return 3.1415926535897932384626;
-        case 42:
-            return 2.7182818284590452353603;
-        case 43:
-            return 0.5772156649015328606065;
+        case 41: return 3.1415926535897932384626;
+        case 42: return 2.7182818284590452353603;
+        case 43: return 0.5772156649015328606065;
     }
     return 0;
 }
