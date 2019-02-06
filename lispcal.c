@@ -60,10 +60,9 @@ double respond(char *flagptr)
 
 double getnumber(char c)
 {
-    double number;
-    int decimal;
-    if(c=='.') number=0,decimal=1;
-    else number=(c-'0')*1.0,decimal=0;
+    double number,decimal;
+    if(c=='.') number=0.0,decimal=0.1;
+    else number=c-'0',decimal=1.0;
     for(c=getchar();c!=' '&&c!='('&&c!=')';c=getchar())
     {
         if(c=='\n'||c=='\r'||c==EOF)
@@ -73,16 +72,10 @@ double getnumber(char c)
         }
         else if(c>='0'&&c<='9')
         {
-            if(decimal)
-            {
-                double k=(c-'0')*1.0;
-                for(int i=decimal;i;--i) k/=10;
-                number+=k;
-                ++decimal;
-            }
-            else number=number*10+1.0*(c-'0');
+            if(decimal!=1.0) number+=(c-'0')*decimal,decimal/=10;
+            else number=number*10+c-'0';
         }
-        else if(c=='.'&&decimal==0) decimal=1;
+        else if(c=='.'&&decimal==1.0) decimal=0.1;
         else
         {
             throwidenterror;
