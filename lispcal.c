@@ -12,9 +12,10 @@ int main(void)
     if((stack.fn=malloc(sizeof(struct function)*ALLOC_SIZE))==NULL)
         throwallocerror,free(stack.val),exit(1);
     stack.allocfn=ALLOC_SIZE;
+    stack.lastvalue=0;
     puts("Lispcal: A calculator using a lisp-like syntax\n");
     char flag=1;
-    while(flag) fputs("CAL> ",stdout),printf("   = %lf\n\n",respond(&flag));
+    while(flag) fputs(">>> ",stdout),printf("=== %lf\n\n",respond(&flag));
     free(stack.fn);
     free(stack.val);
     return 0;
@@ -205,7 +206,7 @@ double invoke(unsigned sig)
                             ,stack.val[stack.vallevel+1]));
                 break;
         case 14: stack.vallevel-=2;
-                pushstack(pow(stack.val[stack.vallevel]
+                pushstack(fmod(stack.val[stack.vallevel]
                             ,stack.val[stack.vallevel+1]));
                 break;
         case 17: pushstack(sin(stack.val[--stack.vallevel])); break;
