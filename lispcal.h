@@ -1,7 +1,7 @@
 #ifndef LISPCAL_H
 #define LISPCAL_H
 
-#define ALLOC_SIZE 8
+#define ALLOC_SIZE 16
 
 #define throwallocerror puts("RAM error!")
 #define throwidenterror puts("Unknown identifier!")
@@ -18,28 +18,24 @@ struct stack_structure
     double *val;
     size_t vallevel;
     size_t allocval;
-
     struct function *fn;
     size_t fnlevel;
     size_t allocfn;
-
     double lastvalue;
 } stack;
 
-void exiting(void);
-
 void printstack(void);
 
-double invoke(unsigned sig);
+double invoke(unsigned);
 
-double getnumber(char first);
+double getnumber(char);
 
-int pushstack(double number);
+int pushstack(double);
 
-int pushfunction(struct function newfn);
+int pushfunction(struct function);
 
-struct function identify(char first);
+struct function identify(char);
 
-double respond(char *flagptr);
+double respond(char*);
 
 #endif
