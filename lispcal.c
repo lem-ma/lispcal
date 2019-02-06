@@ -1,35 +1,32 @@
-#include "lispcal.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
+#include "lispcal.h"
+
 int main(void)
 {
-    stack.val=malloc(sizeof(double)*ALLOC_SIZE);
+    if((stack.val=malloc(sizeof(double)*ALLOC_SIZE))==NULL)
+        throwallocerror,exit(1);
     stack.allocval=ALLOC_SIZE;
-    stack.fn=malloc(sizeof(struct function)*ALLOC_SIZE);
+    if((stack.fn=malloc(sizeof(struct function)*ALLOC_SIZE))==NULL)
+        throwallocerror,free(stack.val),exit(1);
     stack.allocfn=ALLOC_SIZE;
-    atexit(exiting);
-    if(stack.val==NULL||stack.fn==NULL) throwallocerror,exit(1);
-    char stay=1;
-    puts("\rLispcal: A calculator using a lisp-like syntax\n");
-    while(stay)
-        fputs("CAL> ",stdout),printf("= %lf\n\n",respond(&stay));
+    puts("Lispcal: A calculator using a lisp-like syntax\n");
+    char flag=1;
+    while(flag) fputs("CAL> ",stdout),printf("   = %lf\n\n",respond(&flag));
+    free(stack.fn);
+    free(stack.val);
     return 0;
 }
 
 double respond(char *flagptr)
 {
-    char c;
     stack.vallevel=stack.fnlevel=0;
-    while((c=getchar())!='\n'&&c!='\r'&&c!=EOF)
+    for(char c=getchar();c!='\n'&&c!='\r'&&c!=EOF;c=getchar())
     {
         if(c==' '||c=='('||c==')') continue;
-        else if((c>='0'&&c<='9')||c=='.')
-        {
-            if(pushstack(getnumber(c))) throwallocerror,exit(1);
-        }
+        else if((c>='0'&&c<='9')||c=='.') pushstack(getnumber(c));
         else if((c>='a'&&c<='z')
                 ||c=='+'||c=='-'||c=='*'||c=='/'||c=='^'||c=='%')
         {
@@ -44,7 +41,7 @@ double respond(char *flagptr)
                 *flagptr=0;
                 return 0;
             }
-            else if(pushfunction(newf)) throwallocerror,exit(1);
+            else pushfunction(newf);
         }
         else
         {
@@ -60,37 +57,31 @@ double respond(char *flagptr)
     return (stack.lastvalue=stack.val[0]);
 }
 
-void exiting(void)
+double getnumber(char c)
 {
-    free(stack.val);
-    free(stack.fn);
-}
-
-double getnumber(char first)
-{
-    double number=(first-'0')*1.0;
-    int flag=1,decimal=0;
-    while(flag)
+    double number;
+    int decimal;
+    if(c=='.') number=0,decimal=1;
+    else number=(c-'0')*1.0,decimal=0;
+    for(c=getchar();c!=' '&&c!='('&&c!=')';c=getchar())
     {
-        first=getchar();
-        if(first=='\n'||first=='\r'||first==EOF)
+        if(c=='\n'||c=='\r'||c==EOF)
         {
-            ungetc(first,stdin);
+            ungetc(c,stdin);
             break;
         }
-        else if(first==' '||first=='('||first==')') break;
-        else if(first>='0'&&first<='9')
+        else if(c>='0'&&c<='9')
         {
             if(decimal)
             {
-                double k=(first-'0')*1.0;
+                double k=(c-'0')*1.0;
                 for(int i=decimal;i;--i) k/=10;
                 number+=k;
                 ++decimal;
             }
-            else number=number*10+1.0*(first-'0');
+            else number=number*10+1.0*(c-'0');
         }
-        else if(first=='.') decimal=1;
+        else if(c=='.'&&decimal==0) decimal=1;
         else
         {
             throwidenterror;
@@ -106,10 +97,9 @@ int pushstack(double number)
     {
         stack.allocval+=ALLOC_SIZE;
         stack.val=realloc(stack.val,sizeof(double)*stack.allocval);
-        if(stack.val==NULL) exit(1);
+        if(stack.val==NULL) throwallocerror,free(stack.fn),exit(1);
     }
-    stack.val[stack.vallevel]=number;
-    stack.vallevel++;
+    stack.val[stack.vallevel++]=number;
     if(--stack.fn[stack.fnlevel-1].nargs==0)
         invoke(stack.fn[--stack.fnlevel].signature);
     return 0;
@@ -117,15 +107,14 @@ int pushstack(double number)
 
 int pushfunction(struct function newfn)
 {
-    if(newfn.nargs==0)
-        return pushstack(invoke(newfn.signature));
+    if(newfn.nargs==0) return pushstack(invoke(newfn.signature));
     if(stack.fnlevel==stack.allocfn)
     {
         stack.allocfn+=ALLOC_SIZE;
         stack.fn=realloc(stack.fn,sizeof(struct function)*stack.allocfn);
+        if(stack.fn==NULL) throwallocerror,free(stack.val),exit(1);
     }
-    stack.fn[stack.fnlevel]=newfn;
-    stack.fnlevel++;
+    stack.fn[stack.fnlevel++]=newfn;
     return 0;
 }
 
@@ -135,15 +124,15 @@ inline char eq(char *s1, char *s2)
     return !(*s2);
 }
 
-struct function identify(char first)
+struct function identify(char c)
 {
     struct function fn={0,0};
     char buf[6];
     buf[5]='\0';
-    buf[0]=first;
+    buf[0]=c;
     for(int i=1;i<5;i++)
     {
-        char c=getchar();
+        c=getchar();
         if(c=='\n'||c=='\r'||c==EOF)
         {
             ungetc(c,stdin);
@@ -192,106 +181,49 @@ struct function identify(char first)
 
 double invoke(unsigned sig)
 {
-    double temp;
     switch(sig)
     {
         case 2: return stack.lastvalue;
-        case 9:
-            temp=stack.val[stack.vallevel-2]+stack.val[stack.vallevel-1];
-            stack.vallevel-=2;
-            pushstack(temp);
-            break;
-        case 10:
-            temp=stack.val[stack.vallevel-2]-stack.val[stack.vallevel-1];
-            stack.vallevel-=2;
-            pushstack(temp);
-            break;
-        case 11:
-            temp=stack.val[stack.vallevel-2]*stack.val[stack.vallevel-1];
-            stack.vallevel-=2;
-            pushstack(temp);
-            break;
-        case 12:
-            temp=stack.val[stack.vallevel-2]/stack.val[stack.vallevel-1];
-            stack.vallevel-=2;
-            pushstack(temp);
-            break;
-        case 13:
-            temp=pow(stack.val[stack.vallevel-2],
-                    stack.val[stack.vallevel-1]);
-            stack.vallevel-=2;
-            pushstack(temp);
-            break;
-        case 14:
-            temp=fmod(stack.val[stack.vallevel-2],
-                    stack.val[stack.vallevel-1]);
-            stack.vallevel-=2;
-            pushstack(temp);
-            break;
-        case 17:
-            temp=sin(stack.val[--stack.vallevel]);
-            pushstack(temp);
-            break;
-        case 18:
-            temp=cos(stack.val[--stack.vallevel]);
-            pushstack(temp);
-            break;
-        case 19:
-            temp=tan(stack.val[--stack.vallevel]);
-            pushstack(temp);
-            break;
-        case 20:
-            temp=asin(stack.val[--stack.vallevel]);
-            pushstack(temp);
-            break;
-        case 21:
-            temp=acos(stack.val[--stack.vallevel]);
-            pushstack(temp);
-            break;
-        case 22:
-            temp=atan(stack.val[--stack.vallevel]);
-            pushstack(temp);
-            break;
-        case 23:
-            temp=sinh(stack.val[--stack.vallevel]);
-            pushstack(temp);
-            break;
-        case 24:
-            temp=cosh(stack.val[--stack.vallevel]);
-            pushstack(temp);
-            break;
-        case 25:
-            temp=tanh(stack.val[--stack.vallevel]);
-            pushstack(temp);
-            break;
-        case 26:
-            temp=exp(stack.val[--stack.vallevel]);
-            pushstack(temp);
-            break;
-        case 27:
-            temp=sqrt(stack.val[--stack.vallevel]);
-            pushstack(temp);
-            break;
-        case 28:
-            temp=log(stack.val[--stack.vallevel]);
-            pushstack(temp);
-            break;
-        case 29:
-            temp=log10(stack.val[--stack.vallevel]);
-            pushstack(temp);
-            break;
-        case 30:
-            temp=ceil(stack.val[--stack.vallevel]);
-            pushstack(temp);
-            break;
-        case 31:
-            temp=floor(stack.val[--stack.vallevel]);
-            pushstack(temp);
-            break;
-        case 32:
-            temp=fabs(stack.val[--stack.vallevel]);
-            pushstack(temp);
-            break;
+        case 9: stack.vallevel-=2;
+                pushstack(stack.val[stack.vallevel]
+                        +stack.val[stack.vallevel+1]);
+                break;
+        case 10: stack.vallevel-=2;
+                pushstack(stack.val[stack.vallevel]
+                        -stack.val[stack.vallevel+1]);
+                break;
+        case 11: stack.vallevel-=2;
+                pushstack(stack.val[stack.vallevel]
+                        *stack.val[stack.vallevel+1]);
+                break;
+        case 12: stack.vallevel-=2;
+                pushstack(stack.val[stack.vallevel]
+                        /stack.val[stack.vallevel+1]);
+                break;
+        case 13: stack.vallevel-=2;
+                pushstack(pow(stack.val[stack.vallevel]
+                            ,stack.val[stack.vallevel+1]));
+                break;
+        case 14: stack.vallevel-=2;
+                pushstack(pow(stack.val[stack.vallevel]
+                            ,stack.val[stack.vallevel+1]));
+                break;
+        case 17: pushstack(sin(stack.val[--stack.vallevel])); break;
+        case 18: pushstack(cos(stack.val[--stack.vallevel])); break;
+        case 19: pushstack(tan(stack.val[--stack.vallevel])); break;
+        case 20: pushstack(asin(stack.val[--stack.vallevel])); break;
+        case 21: pushstack(acos(stack.val[--stack.vallevel])); break;
+        case 22: pushstack(atan(stack.val[--stack.vallevel])); break;
+        case 23: pushstack(sinh(stack.val[--stack.vallevel])); break;
+        case 24: pushstack(cosh(stack.val[--stack.vallevel])); break;
+        case 25: pushstack(tanh(stack.val[--stack.vallevel])); break;
+        case 26: pushstack(exp(stack.val[--stack.vallevel])); break;
+        case 27: pushstack(sqrt(stack.val[--stack.vallevel])); break;
+        case 28: pushstack(log(stack.val[--stack.vallevel])); break;
+        case 29: pushstack(log10(stack.val[--stack.vallevel])); break;
+        case 30: pushstack(ceil(stack.val[--stack.vallevel])); break;
+        case 31: pushstack(floor(stack.val[--stack.vallevel])); break;
+        case 32: pushstack(fabs(stack.val[--stack.vallevel])); break;
         case 41: return 3.1415926535897932384626;
         case 42: return 2.7182818284590452353603;
         case 43: return 0.5772156649015328606065;
