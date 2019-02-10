@@ -94,7 +94,7 @@ int pushstack(double number)
         if(stack.val==NULL) throwallocerror,free(stack.fn),exit(1);
     }
     stack.val[stack.vallevel++]=number;
-    if(--stack.fn[stack.fnlevel-1].nargs==0)
+    if(stack.fnlevel&&(--stack.fn[stack.fnlevel-1].nargs==0))
         invoke(stack.fn[--stack.fnlevel].signature);
     return 0;
 }
