@@ -7,10 +7,10 @@
 int main(void)
 {
     if((stack.val=malloc(sizeof(double)*ALLOC_SIZE))==NULL)
-        throwallocerror,exit(1);
+        puts("RAM error!"),exit(1);
     stack.allocval=ALLOC_SIZE;
     if((stack.fn=malloc(sizeof(struct function)*ALLOC_SIZE))==NULL)
-        throwallocerror,free(stack.val),exit(1);
+        puts("RAM error!"),free(stack.val),exit(1);
     stack.allocfn=ALLOC_SIZE;
     stack.lastvalue=0;
     puts("Lispcal: A calculator using a lisp-like syntax\n");
@@ -24,19 +24,16 @@ int main(void)
 double respond(char *flagptr)
 {
     stack.vallevel=stack.fnlevel=0;
+    int errorflag=0;
     for(char c=getchar();c!='\n'&&c!='\r'&&c!=EOF;c=getchar())
     {
-        if(c==' '||c=='('||c==')') continue;
+        if(errorflag||c==' '||c=='('||c==')') continue;
         else if((c>='0'&&c<='9')||c=='.') pushstack(getnumber(c));
         else if((c>='a'&&c<='z')
                 ||c=='+'||c=='-'||c=='*'||c=='/'||c=='^'||c=='%')
         {
             struct function newf=identify(c);
-            if(newf.signature==0)
-            {
-                throwidenterror;
-                return 0;
-            }
+            if(newf.signature==0) errorflag=1;
             else if(newf.signature==1)
             {
                 *flagptr=0;
@@ -44,15 +41,11 @@ double respond(char *flagptr)
             }
             else pushfunction(newf);
         }
-        else
-        {
-            throwidenterror;
-            return 0;
-        }
+        else printf("\nUnknown identifier: %c\n",c),errorflag=1;
     }
-    if(stack.vallevel!=1||stack.fnlevel!=0)
+    if(errorflag||stack.vallevel!=1||stack.fnlevel!=0)
     {
-        throwundeferror;
+        puts("\nUndefined behaviour!");
         return 0;
     }
     return (stack.lastvalue=stack.val[0]);
@@ -78,7 +71,7 @@ double getnumber(char c)
         else if(c=='.'&&decimal==1.0) decimal=0.1;
         else
         {
-            throwidenterror;
+            puts("\nWrongly formatted number!");
             break;
         }
     }
@@ -91,7 +84,7 @@ int pushstack(double number)
     {
         stack.allocval+=ALLOC_SIZE;
         stack.val=realloc(stack.val,sizeof(double)*stack.allocval);
-        if(stack.val==NULL) throwallocerror,free(stack.fn),exit(1);
+        if(stack.val==NULL) puts("RAM error!"),free(stack.fn),exit(1);
     }
     stack.val[stack.vallevel++]=number;
     if(stack.fnlevel&&(--stack.fn[stack.fnlevel-1].nargs==0))
@@ -106,7 +99,7 @@ int pushfunction(struct function newfn)
     {
         stack.allocfn+=ALLOC_SIZE;
         stack.fn=realloc(stack.fn,sizeof(struct function)*stack.allocfn);
-        if(stack.fn==NULL) throwallocerror,free(stack.val),exit(1);
+        if(stack.fn==NULL) puts("RAM error!"),free(stack.val),exit(1);
     }
     stack.fn[stack.fnlevel++]=newfn;
     return 0;
@@ -139,7 +132,13 @@ struct function identify(char c)
             break;
         }
         else if(c>='a'&&c<='z') buf[i]=c;
-        else return fn;
+        else
+        {
+            buf[i]=c;
+            buf[i+1]='\0';
+            printf("\nUnknown identifier: %s\n",buf);
+            return fn;
+        }
     }
     if(eq(buf,"exit")||eq(buf,"quit")) fn.signature=1,fn.nargs=0;
     else if(eq(buf,"ans")||eq(buf,"ditto")) fn.signature=2,fn.nargs=0;
@@ -170,6 +169,7 @@ struct function identify(char c)
     else if(eq(buf,"pi")) fn.signature=41,fn.nargs=0;
     else if(eq(buf,"e")) fn.signature=42,fn.nargs=0;
     else if(eq(buf,"gamma")) fn.signature=43,fn.nargs=0;
+    else printf("\nUnknown identifier: %s\n",buf);
     return fn;
 }
 
