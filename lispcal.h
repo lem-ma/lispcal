@@ -3,10 +3,6 @@
 
 #define ALLOC_SIZE 16
 
-#define throwallocerror puts("RAM error!")
-#define throwidenterror puts("Unknown identifier!")
-#define throwundeferror puts("Undefined behaviour!")
-
 struct function
 {
     unsigned signature;
