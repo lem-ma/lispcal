@@ -1,6 +1,8 @@
 #ifndef LISPCAL_H
 #define LISPCAL_H
 
+#include <stddef.h>
+
 #define ALLOC_SIZE 16
 
 struct function
