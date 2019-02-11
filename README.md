@@ -5,6 +5,8 @@ A calculator using a lisp-like syntax
 
 `Lispcal` basically does what you think it should do when handling arithmatic expressions in the syntax of lisp.
 
+All input constant should be positive.
+
 Usage
 ------
 
