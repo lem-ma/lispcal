@@ -34,6 +34,6 @@ int pushfunction(struct function);
 
 struct function identify(char);
 
-double respond(char*);
+int respond(void);
 
 #endif
