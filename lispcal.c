@@ -14,14 +14,19 @@ int main(void)
     stack.allocfn=ALLOC_SIZE;
     stack.lastvalue=0;
     puts("Lispcal: A calculator using a lisp-like syntax\n");
-    char flag=1;
-    while(flag) fputs(">>> ",stdout),printf("=== %lf\n\n",respond(&flag));
+    for(;;)
+    {
+        fputs("\n>>> ",stdout);
+        if(respond()) break;
+        for(int i=0;i<stack.vallevel;i++) printf("=== %lf\n",stack.val[i]);
+        if(stack.vallevel) stack.lastvalue=stack.val[stack.vallevel-1];
+    }
     free(stack.fn);
     free(stack.val);
     return 0;
 }
 
-double respond(char *flagptr)
+int respond(void)
 {
     stack.vallevel=stack.fnlevel=0;
     int errorflag=0;
@@ -34,21 +39,14 @@ double respond(char *flagptr)
         {
             struct function newf=identify(c);
             if(newf.signature==0) errorflag=1;
-            else if(newf.signature==1)
-            {
-                *flagptr=0;
-                return 0;
-            }
+            else if(newf.signature==1) return 1;
             else pushfunction(newf);
         }
         else printf("\nUnknown identifier: %c\n",c),errorflag=1;
     }
-    if(errorflag||stack.vallevel!=1||stack.fnlevel!=0)
-    {
-        puts("\nUndefined behaviour!");
-        return 0;
-    }
-    return (stack.lastvalue=stack.val[0]);
+    if(errorflag||stack.fnlevel!=0)
+        stack.vallevel=0,puts("\nUndefined behaviour!");
+    return 0;
 }
 
 double getnumber(char c)
